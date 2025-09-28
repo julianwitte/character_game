@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] PlayerDimensions standingDimensions;
     [SerializeField] PlayerDimensions crouchedDimensions;
 
+    private WeaponController weaponController;
+
     private Vector3 moveDirection = Vector3.zero;
     private Vector3 lookDirection = Vector3.zero;
 
@@ -37,12 +39,23 @@ public class PlayerController : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        weaponController = playerTransfom.GetComponent<WeaponController>();
+    }
+
+    void OnDestroy()
+    {
+        playerInput.onActionTriggered -= HandleActionTriggered;
     }
 
     private void Update()
     {
         playerTransfom.Rotate(lookDirection * lookSpeed * Time.deltaTime, Space.Self);
-        playerTransfom.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.Self);
+    }
+
+    private void FixedUpdate()
+    {
+        playerTransfom.Translate(moveDirection * moveSpeed * Time.fixedDeltaTime, Space.Self);
 
         // Update Animator parameters based on movement
         playerAnimator.SetFloat("Forward", moveDirection.z);
@@ -125,6 +138,19 @@ public class PlayerController : MonoBehaviour
                     else if (context.phase == InputActionPhase.Canceled)
                     {
                         StandUp();
+                    }
+                    break;
+
+                case "NextWeapon":
+                    if (context.phase == InputActionPhase.Performed)
+                    {
+                        weaponController.NextWeapon();
+                    }
+                    break;
+                case "PreviousWeapon":
+                    if (context.phase == InputActionPhase.Performed)
+                    {
+                        weaponController.PreviousWeapon();
                     }
                     break;
                 default:
