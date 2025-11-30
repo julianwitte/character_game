@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] PlayerInput playerInput;
     [SerializeField] string actionMapName = "Player";
+    [SerializeField] string uiMapName = "UI";
     [SerializeField] Transform playerTransfom;
     [SerializeField] float moveSpeed = 5f;
     [SerializeField] float lookSpeed = 30f;
@@ -14,6 +15,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] CapsuleCollider playerCollider;
     [SerializeField] PlayerDimensions standingDimensions;
     [SerializeField] PlayerDimensions crouchedDimensions;
+    [SerializeField] WeaponSelectionUI weaponSelectionUI;
+    [SerializeField] Attacker attacker;
 
     private WeaponController weaponController;
 
@@ -41,6 +44,22 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = false;
 
         weaponController = playerTransfom.GetComponent<WeaponController>();
+
+        weaponSelectionUI.UIStateChanged.AddListener((isOpen) =>
+        {
+            if(isOpen)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                playerInput.SwitchCurrentActionMap(uiMapName);
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                playerInput.SwitchCurrentActionMap(actionMapName);
+            }
+        });
     }
 
     void OnDestroy()
@@ -151,6 +170,50 @@ public class PlayerController : MonoBehaviour
                     if (context.phase == InputActionPhase.Performed)
                     {
                         weaponController.PreviousWeapon();
+                    }
+                    break;
+                case "OpenWeaponsMenu":
+                    if (context.phase == InputActionPhase.Performed)
+                    {
+                        if (weaponSelectionUI.IsOpen)
+                        {
+                            weaponSelectionUI.Close();
+                            Cursor.lockState = CursorLockMode.Locked;
+                            Cursor.visible = false;
+                        }
+                        else
+                        {
+                            weaponSelectionUI.Open();
+                            Cursor.lockState = CursorLockMode.None;
+                            Cursor.visible = true;
+                        }
+                    }
+                    break;
+                case "Attack":
+                    if (context.phase == InputActionPhase.Performed)
+                    {
+                        Debug.Log("Attack Triggered");
+                        var attackCommand = attacker.CreateAttackCommand();
+                        CommandController.Instance.ExecuteCommand(attackCommand);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (context.action.actionMap.name == uiMapName)
+        {
+            switch (context.action.name)
+            {
+                case "Cancel":
+                    if (context.phase == InputActionPhase.Performed)
+                    {
+                        if (weaponSelectionUI.IsOpen)
+                        {
+                            weaponSelectionUI.Close();
+                            Cursor.lockState = CursorLockMode.Locked;
+                            Cursor.visible = false;
+                        }
                     }
                     break;
                 default:
